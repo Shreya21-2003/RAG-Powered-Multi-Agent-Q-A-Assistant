@@ -1,0 +1,34 @@
+class AgenticWorkflow:
+    def __init__(self):
+        self.steps = []
+
+    def add_step(self, step):
+        self.steps.append(step)
+
+    def execute(self):
+        for step in self.steps:
+            step.run()
+
+
+class Step:
+    def __init__(self, name, action):
+        self.name = name
+        self.action = action
+
+    def run(self):
+        print(f"Executing: {self.name}")
+        self.action()
+
+
+def action_one():
+    print("Action One Complete!")
+
+def action_two():
+    print("Action Two Complete!")
+
+
+workflow = AgenticWorkflow()
+workflow.add_step(Step("Step 1", action_one))
+workflow.add_step(Step("Step 2", action_two))
+
+workflow.execute()
