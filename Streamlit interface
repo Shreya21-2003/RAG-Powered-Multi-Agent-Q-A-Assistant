@@ -1,0 +1,104 @@
+import streamlit as st
+import nltk
+from nltk.tokenize import sent_tokenize
+from sentence_transformers import SentenceTransformer
+import faiss
+import numpy as np
+from transformers import GPT2LMHeadModel, GPT2Tokenizer
+import os
+nltk.download('punkt')
+
+st.title("Semantic Search & GPT Text Generator")
+st.sidebar.title("Navigation")
+page = st.sidebar.selectbox("Choose a section", ["Upload & Search", "Text Generation", "Workflow Executor"])
+
+@st.cache_resource
+def load_embedding_model():
+    return SentenceTransformer('all-MiniLM-L6-v2')
+
+@st.cache_resource
+def load_gpt2():
+    tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
+    model = GPT2LMHeadModel.from_pretrained("gpt2")
+    return tokenizer, model
+
+if page == "Upload & Search":
+    st.header("Upload Documents and Ask a Question")
+
+    uploaded_files = st.file_uploader("Upload Text Files", type=["txt"], accept_multiple_files=True)
+
+    if uploaded_files:
+        documents = [f.read().decode('utf-8') for f in uploaded_files]
+        chunks = []
+        for doc in documents:
+            chunks.extend(sent_tokenize(doc))
+
+        model = load_embedding_model()
+        embeddings = model.encode(chunks, convert_to_numpy=True)
+        dimension = embeddings.shape[1]
+        index = faiss.IndexFlatL2(dimension)
+        index.add(embeddings)
+
+        query = st.text_input("Enter your question")
+
+        if query:
+            query_embedding = model.encode([query], convert_to_numpy=True)
+            distances, indices = index.search(query_embedding, 3)
+            st.subheader("Top Matching Chunks:")
+            for i, idx in enumerate(indices[0]):
+                st.write(f"**Distance:** {distances[0][i]:.4f}")
+                st.write(f"`{chunks[idx]}`")
+
+elif page == "Text Generation":
+    st.header("GPT-2 Text Generation")
+
+    prompt = st.text_area("Enter a prompt:", value="Once upon a time", height=150)
+    length = st.slider("Max length of output", 10, 200, 50)
+
+    if st.button("Generate"):
+        tokenizer, model = load_gpt2()
+        input_ids = tokenizer.encode(prompt, return_tensors='pt')
+        output = model.generate(input_ids, max_length=length, num_return_sequences=1)
+        generated = tokenizer.decode(output[0], skip_special_tokens=True)
+        st.subheader("Generated Text:")
+        st.write(generated)
+
+elif page == "Workflow Executor":
+    st.header("Agentic Workflow Demo")
+
+    class AgenticWorkflow:
+        def __init__(self):
+            self.steps = []
+
+        def add_step(self, step):
+            self.steps.append(step)
+
+        def execute(self):
+            logs = []
+            for step in self.steps:
+                logs.append(step.run())
+            return logs
+
+    class Step:
+        def __init__(self, name, action):
+            self.name = name
+            self.action = action
+
+        def run(self):
+            result = f"Executing: {self.name}\n{self.action()}"
+            return result
+
+    def action_one():
+        return "Action One Complete!"
+
+    def action_two():
+        return "Action Two Complete!"
+
+    workflow = AgenticWorkflow()
+    workflow.add_step(Step("Step 1", action_one))
+    workflow.add_step(Step("Step 2", action_two))
+
+    if st.button("Run Workflow"):
+        logs = workflow.execute()
+        for log in logs:
+            st.text(log)
