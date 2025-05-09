@@ -1,0 +1,32 @@
+   !pip install transformers accelerate faiss-cpu sentence-transformers flask
+   
+   from google.colab import files
+
+   uploaded = files.upload()
+   
+
+   import os
+   print(os.listdir())
+   
+
+import nltk
+from nltk.tokenize import sent_tokenize
+
+nltk.download('punkt')
+nltk.download('punkt_tab') 
+
+def chunk_documents(documents):
+    chunks = []
+    for doc in documents:
+        sentences = sent_tokenize(doc)
+        chunks.extend(sentences)
+    return chunks
+
+documents = []
+for filename in ['text1.txt', 'text3.txt', 'text2.txt']:
+    with open(filename, 'r', encoding='utf-8') as f:
+        documents.append(f.read())
+
+chunks = chunk_documents(documents)
+
+print(chunks)
