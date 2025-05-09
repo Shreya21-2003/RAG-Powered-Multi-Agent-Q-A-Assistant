@@ -1,0 +1,30 @@
+
+from sentence_transformers import SentenceTransformer
+import faiss
+import numpy as np
+
+
+model = SentenceTransformer('all-MiniLM-L6-v2')
+
+embeddings = model.encode(chunks, convert_to_numpy=True)
+
+dimension = embeddings.shape[1]
+index = faiss.IndexFlatL2(dimension) 
+index.add(embeddings)  
+
+def retrieve_chunks(query, index, chunks, model, top_k=3):
+    query_embedding = model.encode([query], convert_to_numpy=True)
+
+    distances, indices = index.search(query_embedding, top_k)
+
+    results = [(chunks[idx], distances[0][i]) for i, idx in enumerate(indices[0])]
+    return results
+
+# Example usage:
+if __name__ == "__main__":
+    user_query = "What is your refund policy?"
+    top_chunks = retrieve_chunks(user_query, index, chunks, model)
+    print("Top relevant chunks:")
+    for chunk_text, dist in top_chunks:
+        print(f"Distance: {dist:.4f}, Text: {chunk_text}")
+
