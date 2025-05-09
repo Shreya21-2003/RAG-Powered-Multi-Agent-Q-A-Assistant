@@ -37,11 +37,6 @@ This is a lightweight Streamlit web app that allows users to upload `.txt` files
 ## 🚀 How to Run the App
 
 ### 1. Clone the Repository
-
-```bash
-git clone https://github.com/your-username/llm-doc-qa.git
-cd llm-doc-qa
-
-1. **Install dependencies**
-2.**Add OpenAI API Key**
-3.**Start the App**
+##2. **Install dependencies**
+##3.**Add OpenAI API Key**
+##4.**Start the App**
